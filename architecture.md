@@ -22,7 +22,7 @@ sequenceDiagram
    participant BACKEND_SVC
    participant SQL_DB
 
-   PUBLIC_INTERNET->>FRONTEND: sends request
+   PUBLIC_INTERNET->>FRONTEND_SVC: sends request
    FRONTEND_SVC->>BACKEND_SVC: sends request
    BACKEND_SVC->>SQL_DB: query database
    SQL_DB->>BACKEND_SVC: return query
