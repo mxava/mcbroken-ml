@@ -21,14 +21,14 @@ erDiagram
 sequenceDiagram
    participant PUBLIC_INTERNET
    participant FRONTEND_SVC
-   participant BACKEND_SVC
+   participant ML_MODEL
    participant SQL_DB
 
    PUBLIC_INTERNET->>FRONTEND_SVC: sends request
    FRONTEND_SVC->>ML_MODEL: sends request
    ML_MODEL->>SQL_DB: query database
-   SQL_DB->>BACKEND_SVC: return query
-   BACKEND_SVC->>FRONTEND_SVC: returns response
+   SQL_DB->>ML_MODEL: return query
+   ML_MODEL->>FRONTEND_SVC: returns response
    FRONTEND_SVC->>PUBLIC_INTERNET: returns response
 ```
 
