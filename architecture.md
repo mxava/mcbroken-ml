@@ -11,6 +11,7 @@ erDiagram
     K8S_CLUSTER ||--|{ BACKEND_QUEUE_SVC : hosts
     K8S_CLUSTER ||--|{ POSTGRESQL_DB : hosts
     ML_MODEL }|--|{ POSTGRESQL_DB : accesses
+    ML_MODEL }|--|{ BACKEND_QUEUE_SVC : accesses
     BACKEND_QUEUE_SVC }|--|{ POSTGRESQL_DB : accesses
     DEV_TOOLS ||--|{ BACKEND_QUEUE_SVC : accesses
     DEV_TOOLS ||--|| K8S_CLUSTER : accesses
@@ -23,13 +24,16 @@ sequenceDiagram
    participant FRONTEND_SVC
    participant ML_MODEL
    participant SQL_DB
+   participant BACKEND_SVC
 
    PUBLIC_INTERNET->>FRONTEND_SVC: sends request
    FRONTEND_SVC->>ML_MODEL: sends request
+   ML_MODEL-->>BACKEND_SVC: check queue status<br/>waits as needed
+   BACKEND_SVC-->>ML_MODEL: return response
    ML_MODEL->>SQL_DB: query database
    SQL_DB->>ML_MODEL: return query
-   ML_MODEL->>FRONTEND_SVC: returns response
-   FRONTEND_SVC->>PUBLIC_INTERNET: returns response
+   ML_MODEL->>FRONTEND_SVC: return response
+   FRONTEND_SVC->>PUBLIC_INTERNET: return response
 ```
 
 ## SVC Sequence Diagram - Backend
