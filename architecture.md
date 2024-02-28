@@ -42,7 +42,7 @@ sequenceDiagram
 
    Note over BACKEND_SVC: orders queue by ascending time_modified
    QUEUE-->>BACKEND_SVC: fetches lowest item in queue
-   Note over BACKEND_SVC,SQL_DB: does not not overwrite where<br/>DB last_modified >= queue time_modified
+   Note over BACKEND_SVC,SQL_DB: does not not overwrite where<br/>DB last_modified >= queue time_modified<br/>except when annotating ML data
    BACKEND_SVC->>SQL_DB: updates database
    SQL_DB->>BACKEND_SVC: transaction completes
    BACKEND_SVC->>QUEUE: updates queue order
