@@ -1,8 +1,8 @@
-## Architecture
+# Architecture
 Everything you need to know about the architecture.
 Latest version can be viewed [here](https://github.com/mxava/mcbroken-ml/blob/main/README.md)
 
-# SVC Relationship Diagram
+## SVC Relationship Diagram
 ```mermaid
 erDiagram
     PUBLIC_INTERNET }o--|| K8S_CLUSTER : inbound_connections
@@ -14,7 +14,7 @@ erDiagram
     DEV_TOOLS ||--|| K8S_CLUSTER : accesses
 ```
 
-# SVC Sequence Diagram
+## SVC Sequence Diagram
 ```mermaid
 sequenceDiagram
    participant PUBLIC_INTERNET
