@@ -26,6 +26,6 @@ sequenceDiagram
    FRONTEND_SVC->>BACKEND_SVC: sends request
    BACKEND_SVC->>SQL_DB: query database
    SQL_DB->>BACKEND_SVC: return query
-   BACKEND_SVC->>FRONTEND_SVC: send response
-   FRONTEND_SVC->>PUBLIC_INTERNET: send response
+   BACKEND_SVC->>FRONTEND_SVC: returns response
+   FRONTEND_SVC->>PUBLIC_INTERNET: returns response
 ```
