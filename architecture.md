@@ -1,5 +1,6 @@
 # Architecture
 Everything you need to know about the architecture.
+I believe strongly that documentation should be maintained, in some way, as a core feature of a product or tool alongside its codebase.
 Latest version can be viewed [here](https://github.com/mxava/mcbroken-ml/blob/main/README.md)
 
 ## SVC Relationship Diagram
