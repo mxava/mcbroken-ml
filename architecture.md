@@ -11,6 +11,7 @@ erDiagram
     K8S_CLUSTER ||--|{ ML_MODEL : hosts
     K8S_CLUSTER ||--|{ BACKEND_QUEUE_SVC : hosts
     K8S_CLUSTER ||--|{ POSTGRESQL_DB : hosts
+    FRONTEND_SVC }|--|{ ML_MODEL : accesses
     ML_MODEL }|--|{ POSTGRESQL_DB : accesses
     ML_MODEL }|--|{ BACKEND_QUEUE_SVC : accesses
     BACKEND_QUEUE_SVC }|--|{ POSTGRESQL_DB : accesses
