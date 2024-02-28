@@ -8,6 +8,7 @@ Tech Stack consists of: <br>
  - Nginx <br>
  - React/TypeScript Frontend <br>
  - Python/FastAPI Backend <br>
+ - Celery/RabbitMQ <br>
  - Postgresql Database <br>
  - Still deciding between Pytorch and Tensorflow for ML framework <br>
 
