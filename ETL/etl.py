@@ -33,11 +33,11 @@ def jack_the_ripper(repo_path: Path=Path.cwd(),
     os.chdir(repo_path) 
     # If does not exist, create target dir
     dump_dir.mkdir(parents=True, exist_ok=True)
-    generate_dump_log(repo_path, dump_dir)
-    print('dump_log.json update complete.')
+    generate_dump_json(repo_path, dump_dir)
+    print('dump.json update complete.')
     return
                 
-def generate_dump_log(repo_path: Path=Path.cwd(),
+def generate_dump_json(repo_path: Path=Path.cwd(),
                       dump_dir: Path=(Path.cwd() / 'DATA_DUMP')
                       ) -> int:
     """Generates log of archive dump as a json file.
@@ -52,9 +52,9 @@ def generate_dump_log(repo_path: Path=Path.cwd(),
     # Saving this for later
     mcbrokenjson_path = repo_path / 'mcbroken.json'
     # Creates a logfile if it doesn't exist
-    dump_log_path = dump_dir / 'dump_log.json'
-    #if dump_log_path.is_file() != True:
-    #    with open(dump_log_path, 'w') as f:
+    dump_json_path = dump_dir / 'dump.json'
+    #if dump_json_path.is_file() != True:
+    #    with open(dump_json_path, 'w') as f:
     #        f.write(json.dump(dict()))
     #        pass
     repo = git.Repo(repo_path)
@@ -65,7 +65,7 @@ def generate_dump_log(repo_path: Path=Path.cwd(),
     rev_list = rev_list.split(' ')[0]
     # create list from string
     rev_list = rev_list.split('\n')
-    with open(dump_dir / 'dump_log.json', 'r+') as dumper:
+    with open(dump_dir / 'dump.json', 'r+') as dumper:
         # check if file already has data
         data = json.load(dumper)
         # TODO: Fix dumpsterfire
@@ -78,15 +78,15 @@ def generate_dump_log(repo_path: Path=Path.cwd(),
             data[each]['properties']['transformed_flag'] = 'False'
         data = json.dumps(data, sort_keys=True, indent=4)
         dumper.write(data)
-    print(f'Dump log generation completed at \'{dump_log_path}\'.')
+    print(f'Dump log generation completed at \'{dump_json_path}\'.')
     return None
 
 def extract_mcbroken_archive(repo_path: Path=Path.cwd(),
                              data_dump: Path=(Path.cwd() / 'DATA_DUMP')
                              ) -> None:
     repo = git.Repo(repo_path)
-    dump_log_json = data_dump / 'dump_log.json'
-    with open(dump_log_json) as dump_processor:
+    dump_json = data_dump / 'dump.json'
+    with open(dump_json) as dump_processor:
         data = json.load(dump_processor)
 
         for each in data:
