@@ -65,11 +65,9 @@ def generate_dump_json(repo_path: Path=Path.cwd(),
     rev_list = rev_list.split(' ')[0]
     # create list from string
     rev_list = rev_list.split('\n')
-       with open(dump_dir / 'dump.json', 'r+') as dumper:
+    with open(dump_dir / 'dump.json', 'r+') as dumper:
         # check if file already has data
         data = json.load(dumper)
-        dumper.seek(0)
-        dumper.truncate()
         print('Checking and updating dump.json')
         for each in rev_list:
             if each in data:
@@ -83,9 +81,8 @@ def generate_dump_json(repo_path: Path=Path.cwd(),
             if 'git_commit_time' in data[each]['properties']:
                 pass
             else:
-                # TODO: Make this do the thing
-                #repo.git.show(each, mcbrokenjson_path, 's --format="%ci')
-                data[each]['properties']['git_commit_time'] = 'dummy_time_value'
+                data[each]['properties']['git_commit_time'] = repo.git.show('--no-patch', '--pretty=format:%ct', each)
+            print(data[each]['properties']['git_commit_time'])
             if 'extracted_flag' in data[each]['properties']:
                 pass
             else:
@@ -95,6 +92,8 @@ def generate_dump_json(repo_path: Path=Path.cwd(),
             else:
                 data[each]['properties']['transformed_flag'] = False
         data = json.dumps(data, sort_keys=True, indent=4)
+        dumper.seek(0)
+        dumper.truncate()
         dumper.write(data)
     print(f'Finished processing \'{dump_json_path}\'.')
     return None
