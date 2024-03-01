@@ -65,20 +65,38 @@ def generate_dump_json(repo_path: Path=Path.cwd(),
     rev_list = rev_list.split(' ')[0]
     # create list from string
     rev_list = rev_list.split('\n')
-    with open(dump_dir / 'dump.json', 'r+') as dumper:
+       with open(dump_dir / 'dump.json', 'r+') as dumper:
         # check if file already has data
         data = json.load(dumper)
-        # TODO: Fix dumpsterfire
+        dumper.seek(0)
+        dumper.truncate()
+        print('Checking and updating dump.json')
         for each in rev_list:
-            print(f'Recording data for \'{each}\'...')
-            data[each] = {'properties': {}}
-            data[each]['properties']['git_commit_time'] = 'dummy_time_value'
-            #repo.git.show(each, mcbrokenjson_path, 's --format="%ci')
-            data[each]['properties']['extracted_flag'] = 'False'
-            data[each]['properties']['transformed_flag'] = 'False'
+            if each in data:
+               pass
+            else:
+                print(f'Adding entry for \'{each}\'...')
+            if 'properties' in data[each]:
+                pass
+            else:
+                data[each] = {'properties': {}}
+            if 'git_commit_time' in data[each]['properties']:
+                pass
+            else:
+                # TODO: Make this do the thing
+                #repo.git.show(each, mcbrokenjson_path, 's --format="%ci')
+                data[each]['properties']['git_commit_time'] = 'dummy_time_value'
+            if 'extracted_flag' in data[each]['properties']:
+                pass
+            else:
+                data[each]['properties']['extracted_flag'] = 'False'
+            if 'transformed_flag' in data[each]['properties']:
+                pass
+            else:
+                data[each]['properties']['transformed_flag'] = False
         data = json.dumps(data, sort_keys=True, indent=4)
         dumper.write(data)
-    print(f'Dump log generation completed at \'{dump_json_path}\'.')
+    print(f'Finished processing \'{dump_json_path}\'.')
     return None
 
 def extract_mcbroken_archive(repo_path: Path=Path.cwd(),
