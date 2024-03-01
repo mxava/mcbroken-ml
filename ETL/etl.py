@@ -53,10 +53,10 @@ def generate_dump_json(repo_path: Path=Path.cwd(),
     mcbrokenjson_path = repo_path / 'mcbroken.json'
     # Creates a logfile if it doesn't exist
     dump_json_path = dump_dir / 'dump.json'
-    #if dump_json_path.is_file() != True:
-    #    with open(dump_json_path, 'w') as f:
-    #        f.write(json.dump(dict()))
-    #        pass
+    if dump_json_path.is_file() != True:
+        with open(dump_json_path, 'w') as f:
+            f.write()
+            pass
     repo = git.Repo(repo_path)
     # list every commit in which mcbroken.json has been
     # modified in reverse chronological order
@@ -67,17 +67,23 @@ def generate_dump_json(repo_path: Path=Path.cwd(),
     rev_list = rev_list.split('\n')
     with open(dump_dir / 'dump.json', 'r+') as dumper:
         # check if file already has data
-        data = json.load(dumper)
+        try:
+            data = json.load(dumper)
+        except ValueError:
+            print(f'File {dump_json_path} is empty. Generating data - this may take a while!')
+            data = dict()
+            pass
         print('Checking and updating dump.json')
         for each in rev_list:
             if each in data:
                pass
             else:
+                data[each] = {'properties': {}}
                 print(f'Adding entry for \'{each}\'...')
             if 'properties' in data[each]:
                 pass
             else:
-                data[each] = {'properties': {}}
+                raise ValueError(f'\'{each}\' says, "Properties? In this economy?"')
             if 'git_commit_time' in data[each]['properties']:
                 pass
             else:
