@@ -1,4 +1,4 @@
-### THAR BE DRAGONS AFOOT.
+### THAR BE DRAGONS
 from pathlib import Path
 import os
 from pyspark.sql import SparkSession, DataFrameReader
@@ -16,8 +16,8 @@ MCBROKEN_ARCHIVE_REPO_PATH = Path('../mcbroken-archive')
 os.chdir(MCBROKEN_ARCHIVE_REPO_PATH)
 MCBROKEN_ARCHIVE_REPO_PATH = Path.cwd()
 
-def jack_the_ripper(repo_path: Path=Path.cwd(),
-                    dump_dir: Path=(Path.cwd() / 'DATA_DUMP')
+def jack_the_ripper(repo_path: Path = Path.cwd(),
+                    dump_dir:  Path = Path('./DATA_DUMP')
                     ) -> list:
     """Extracts and transforms archived datasets from a git repo,
     sequencing them in a directory from oldest to newest.
@@ -34,7 +34,9 @@ def jack_the_ripper(repo_path: Path=Path.cwd(),
     # If does not exist, create target dir
     dump_dir.mkdir(parents=True, exist_ok=True)
     generate_dump_json(repo_path, dump_dir)
-    print('dump.json update complete.')
+    extract_mcbroken_archive(repo_path, dump_dir)
+
+
     return
                 
 def generate_dump_json(repo_path: Path=Path.cwd(),
@@ -55,7 +57,8 @@ def generate_dump_json(repo_path: Path=Path.cwd(),
     dump_json_path = dump_dir / 'dump.json'
     if dump_json_path.is_file() != True:
         with open(dump_json_path, 'w') as f:
-            f.write()
+            empty_dict = {}
+            f.write(json.dump(empty_dict), 'w+')
             pass
     repo = git.Repo(repo_path)
     # list every commit in which mcbroken.json has been
@@ -78,17 +81,23 @@ def generate_dump_json(repo_path: Path=Path.cwd(),
             if each in data:
                pass
             else:
-                data[each] = {'properties': {}}
+                data[each] = {
+                    'properties': {},
+                    'contents': {}
+                    }
                 print(f'Adding entry for \'{each}\'...')
             if 'properties' in data[each]:
                 pass
             else:
                 raise ValueError(f'\'{each}\' says, "Properties? In this economy?"')
+            if 'contents' in data[each]:
+                pass
+            else:
+                raise ValueError(f'\'{each}\' wants to know if this data is ethically sourced!')
             if 'git_commit_time' in data[each]['properties']:
                 pass
             else:
                 data[each]['properties']['git_commit_time'] = repo.git.show('--no-patch', '--pretty=format:%ct', each)
-            print(data[each]['properties']['git_commit_time'])
             if 'extracted_flag' in data[each]['properties']:
                 pass
             else:
@@ -111,15 +120,28 @@ def extract_mcbroken_archive(repo_path: Path=Path.cwd(),
     dump_json = data_dump / 'dump.json'
     with open(dump_json) as dump_processor:
         data = json.load(dump_processor)
-
-        for each in data:
-            print(each)
-            print(each.keys()[0])
+        k = data.keys()
+        for each in k:
+            # TODO: Still broken :(
+            print(repo.commit(each).tree['mcbroken.json'])
+            
+            #if data[current_item]['properties']['extracted_flag'] == 'True':
+            #    continue
+            #elif data[current_item]['properties']['extracted_flag'] == 'True':
+            #    continue
+            #elif data[current_item]['contents']:
+            #    continue
+            #else:
+            #    data[current_item]['contents'] = (str(repo.tags[each].commit.tree('./mcbroken.json')))
+            #    print(data[current_item]['contents'])
+            pass
+            
+            #print(each.keys()[0])
             #print(f'Processing {data[each].keys()}')
             #if each['properties']['extracted_flag'] == False:
             #    with open(each.keys()[0], 'w+') as f:
             #        f.write(repo.commit(each.keys()[0]).tree['mcbroken.json'].data_stream.read())
-            return None
+        return None
                 
 
     
@@ -151,5 +173,5 @@ def extract_mcbroken_archive(repo_path: Path=Path.cwd(),
 
 
 ### Scratchpad
-if __name__ == '__main__':
-    set_cpu_ablaze = jack_the_ripper(MCBROKEN_ARCHIVE_REPO_PATH, 'mcbroken.json')
+#if __name__ == '__main__':
+    #set_cpu_ablaze = jack_the_ripper(MCBROKEN_ARCHIVE_REPO_PATH, 'mcbroken.json')
