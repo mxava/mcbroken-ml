@@ -9,13 +9,14 @@ erDiagram
     PUBLIC_INTERNET }o--|| K8S_CLUSTER : inbound_connections
     K8S_CLUSTER ||--|{ FRONTEND_SVC : hosts
     K8S_CLUSTER ||--|{ ML_MODEL : hosts
-    K8S_CLUSTER ||--|{ BACKEND_QUEUE_SVC : hosts
+    K8S_CLUSTER ||--|{ BACKEND_SVC : hosts
     K8S_CLUSTER ||--|{ POSTGRESQL_DB : hosts
     FRONTEND_SVC }|--|{ ML_MODEL : accesses
     ML_MODEL }|--|{ POSTGRESQL_DB : accesses
-    ML_MODEL }|--|{ BACKEND_QUEUE_SVC : accesses
-    BACKEND_QUEUE_SVC }|--|{ POSTGRESQL_DB : accesses
-    DEV_TOOLS ||--|{ BACKEND_QUEUE_SVC : accesses
+    ML_MODEL }|--|{ BACKEND_SVC : accesses
+    BACKEND_SVC }|--|{ POSTGRESQL_DB : accesses
+    BACKEND_SVC }|--|{ RABBITMQ : accesses
+    DEV_TOOLS ||--|{ BACKEND_SVC : accesses
     DEV_TOOLS ||--|| K8S_CLUSTER : accesses
 ```
 
@@ -31,7 +32,7 @@ sequenceDiagram
    PUBLIC_INTERNET->>FRONTEND_SVC: sends request
    FRONTEND_SVC->>ML_MODEL: sends request
    ML_MODEL-->>BACKEND_SVC: check queue status<br/>waits as needed
-   BACKEND_SVC-->>ML_MODEL: return response
+   BACKEND_SVC-->>ML_MODEL: return "available" response once queue is paused
    ML_MODEL->>SQL_DB: query database
    SQL_DB->>ML_MODEL: return query
    ML_MODEL->>FRONTEND_SVC: return response
