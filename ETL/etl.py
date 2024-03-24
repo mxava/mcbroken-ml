@@ -22,6 +22,76 @@ mcbroken_archive_repo_path = Path(os.environ.get('HOME')) / 'code' / 'mcbroken-a
 os.chdir(mcbroken_archive_repo_path)
 
 
+class DataAggregate:
+    
+    def __init__(self, name):
+        self.name = name
+
+    ### Save / Load Methods
+
+    # TODO: Save DataAggregate to file
+        
+    # TODO: Load DataAggregate from file
+        
+    # TODO: Write to db
+        
+    # MAYBE TODO: Load from db query
+    
+    # TODO: Ingest transformed McBroken data
+    
+    # TODO: Ingest transformed weather data
+    
+    # TODO: Ingest transformed local purchasing power data
+        
+
+    
+
+class ExtractionJob:
+    def __init__(self, name):
+        self.name = name
+
+
+class McBrokenData:
+    def __init__(self, name:str, repo_url:str, working_dir: Path):
+        self.name = name
+        self.source_url = repo_url
+        self.working_dir = working_dir
+        self.is_initialized = self.initialize_git_repo()
+        
+    
+    def initialize_git_repo(
+            mcbroken_archive_url_git:str='https://github.com/rashiq/mcbroken-archive.git',
+            branch:str='main',
+            working_tree_dir = None
+            ) -> Path:
+        if working_tree_dir:
+            repo_dir = working_tree_dir
+        else:
+            repo_dir = Path.cwd() / 'mcbroken-archive'
+        
+        # Attempt to initialize repo
+        try:
+            repo = git.Repo(repo_dir)
+            # Assumes that any valid repo at this location is the correct one
+            assert repo.git_dir
+        except:
+            try:
+                repo = git.Repo.clone_from(mcbroken_archive_url_git,
+                           repo_dir,
+                           branch)
+                assert repo.git_dir
+            except:
+                is_initialized = False
+                raise RuntimeError(f'Unable to locate or clone valid git repo at path "{repo_dir}"')
+        repo.remotes.origin.fetch()
+        is_initialized = True
+        return is_initialized
+
+class WeatherData:
+    # TODO: Think about how to structure McBroken db,
+    # followed by how best to fetch, parse, and load weather data
+    
+
 def do_the_thing(repo_path: Path = Path.cwd(),
                     dump_dir:  Path = None
                     ) -> list:
