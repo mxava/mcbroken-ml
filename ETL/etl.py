@@ -49,18 +49,20 @@ class McBrokenData:
     def __init__(self, name:str, repo_url:str, working_dir: Path):
         self.name = name
         self.source_url = repo_url
-        self.working_dir = working_dir
-        self.is_initialized = self.initialize_git_repo()
- 
+        self.working_dir = self.set_working_dir()
+        git_repo_init = self.initialize_git_repo()
+        self.repo = self.initialize_git_repo[0]
+        self.is_initialized = git_repo_init[1]
+
+    def set_working_dir(working_dir) -> Path:
+        return working_dir if working_dir is not None else (Path.cwd() / 'mcbroken-archive')
+    
     def initialize_git_repo(
             mcbroken_archive_url_git:str='https://github.com/rashiq/mcbroken-archive.git',
             branch:str='main',
             working_tree_dir = None
             ) -> Path:
-        if working_tree_dir:
-            repo_dir = working_tree_dir
-        else:
-            repo_dir = Path.cwd() / 'mcbroken-archive'
+        repo_dir = working_tree_dir if working_tree_dir is not None else (Path.cwd() / 'mcbroken-archive')
         
         # Attempt to initialize repo
         try:
@@ -78,7 +80,16 @@ class McBrokenData:
                 raise RuntimeError(f'Unable to locate or clone valid git repo at path "{repo_dir}"')
         repo.remotes.origin.fetch()
         is_initialized = True
-        return is_initialized
+        return repo, is_initialized
+    
+    def extract(working_dir = None):
+        working_dir = working_dir if working_dir is not None else self.working_dir
+        commit_list = self.repo.git.log('--pretty=%h', '--all', '--', './mcbroken.json')
+        print(commit_list)
+        # Generate dump data
+
+
+        
 
 
 class WeatherData:
@@ -173,4 +184,4 @@ def generate_dump_data(repo_path: Path=Path.cwd(),
 
 ### Scratchpad
 if __name__ == '__main__':
-    computer_on_fire = do_the_thing(mcbroken_archive_repo_path)
+    mcbroken_data = McBrokenData
