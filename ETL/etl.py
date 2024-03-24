@@ -35,30 +35,23 @@ class DataAggregate:
         
     # TODO: Write to db
         
-    # MAYBE TODO: Load from db query
+    # MAYBE TODO: Load from db query (probably won't need this)
     
     # TODO: Ingest transformed McBroken data
     
     # TODO: Ingest transformed weather data
     
     # TODO: Ingest transformed local purchasing power data
-        
-
-    
-
-class ExtractionJob:
-    def __init__(self, name):
-        self.name = name
 
 
 class McBrokenData:
+    
     def __init__(self, name:str, repo_url:str, working_dir: Path):
         self.name = name
         self.source_url = repo_url
         self.working_dir = working_dir
         self.is_initialized = self.initialize_git_repo()
-        
-    
+ 
     def initialize_git_repo(
             mcbroken_archive_url_git:str='https://github.com/rashiq/mcbroken-archive.git',
             branch:str='main',
@@ -87,11 +80,14 @@ class McBrokenData:
         is_initialized = True
         return is_initialized
 
+
 class WeatherData:
+
     # TODO: Think about how to structure McBroken db,
     # followed by how best to fetch, parse, and load weather data
-    
 
+
+# TODO: Deprecate the below functions once converted to a working method
 def do_the_thing(repo_path: Path = Path.cwd(),
                     dump_dir:  Path = None
                     ) -> list:
@@ -115,6 +111,7 @@ def do_the_thing(repo_path: Path = Path.cwd(),
     # TODO: Add the next thing
     return
                 
+
 
 def generate_dump_data(repo_path: Path=Path.cwd(),
                       dump_dir: Path=None
@@ -158,7 +155,6 @@ def generate_dump_data(repo_path: Path=Path.cwd(),
                     print(len(commit_times))
                     f.write(commit_times_as_json)
 
-            
 
 # TODO: Figure out SQL DB schema/desired data
 
