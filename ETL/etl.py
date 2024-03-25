@@ -41,7 +41,11 @@ class DataAggregate:
 
 class McBrokenData:
     
-    def __init__(self, repo_url:str = 'https://github.com/rashiq/mcbroken-archive.git', name:str = None, working_tree_dir: Path = None, dump_dir: Path = None):
+    def __init__(self,
+                 repo_url:str = 'https://github.com/rashiq/mcbroken-archive.git',
+                 name:str = None,
+                 working_tree_dir: Path = None,
+                 dump_dir: Path = None):
         self.name = name
         self.source_url = repo_url
         self.repo_dir = working_tree_dir if working_tree_dir else (Path.cwd() / 'mcbroken-archive')
@@ -52,9 +56,22 @@ class McBrokenData:
     
     def initialize_git_repo(
             self,
-            mcbroken_archive_url_git:str = None,
-            working_tree_dir = None
+            mcbroken_archive_url_git: str = None,
+            working_tree_dir: Path = None
             ) -> tuple:
+        """Initializes git repo.
+
+        Args:
+            mcbroken_archive_url_git (str, optional): git origin source.
+            working_tree_dir (Path, optional): Path to mcbroken-archive repo directory.
+
+        Raises:
+            RuntimeError: Indicates git repo initialization failed.
+
+        Returns:
+            tuple[0]: git repo object
+            tuple[1]: bool indicating it successfully initialized
+        """
         source_url = mcbroken_archive_url_git if mcbroken_archive_url_git is not None else self.source_url
         repo_dir = working_tree_dir if working_tree_dir is not None else self.repo_dir
         # Attempt to initialize repo
@@ -122,12 +139,12 @@ class McBrokenData:
             for each_commit in list(commit_times_dict.keys()):
                 if commit_times_dict[each_commit]['time_fixed'] is not True:
                     print(f'Adjusting \'last_checked\' values for {each_commit}.json...')
-                    current_mcbroken_json = self.dump_dir / each_commit+'.json'
+                    current_mcbroken_json = self.dump_dir / (str(each_commit)+'.json')
                     with open(current_mcbroken_json, 'r+') as f:
                         current_mcbroken_contents = json.load(f)
-                        for each_entry in current_mcbroken_contents:
-                            value_to_subtract_in_seconds = int(each_entry['properties']['last_checked'].split(' ')[1]) * 60
-                            each_entry['properties']['last_checked'] = commit_times_dict[each_commit]['commit_time'] - value_to_subtract_in_seconds
+                        for each_entry in current_mcbroken_contents[0:10]:
+                            value_to_subtract_in_seconds = int(each_entry['properties']['last_checked'].strip(' Checkedminutesago')) * int(60)
+                            each_entry['properties']['last_checked'] = int(commit_times_dict[each_commit]['commit_time']) - value_to_subtract_in_seconds
                         f.seek(0)
                         new_mcbroken_contents = json.dumps(current_mcbroken_contents, sort_keys=True, indent=4)
                         f.write(new_mcbroken_contents)
