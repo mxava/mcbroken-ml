@@ -41,10 +41,10 @@ class DataAggregate:
 
 class McBrokenData:
     
-    def __init__(self, repo_url:str = 'https://github.com/rashiq/mcbroken-archive.git', name:str = None, repo_dir: Path = None, dump_dir: Path = None):
+    def __init__(self, repo_url:str = 'https://github.com/rashiq/mcbroken-archive.git', name:str = None, working_tree_dir: Path = None, dump_dir: Path = None):
         self.name = name
         self.source_url = repo_url
-        self.repo_dir = repo_dir if repo_dir else (Path.cwd() / 'mcbroken-archive')
+        self.repo_dir = working_tree_dir if working_tree_dir else (Path.cwd() / 'mcbroken-archive')
         self.dump_dir = dump_dir if dump_dir else (self.repo_dir / 'DATA_DUMP')
         git_repo_init = self.initialize_git_repo()
         self.repo = git_repo_init[0]
@@ -56,7 +56,7 @@ class McBrokenData:
             working_tree_dir = None
             ) -> tuple:
         source_url = mcbroken_archive_url_git if mcbroken_archive_url_git is not None else self.source_url
-        repo_dir = working_tree_dir if working_tree_dir is not None else (Path.cwd() / 'mcbroken-archive')
+        repo_dir = working_tree_dir if working_tree_dir is not None else self.repo_dir
         # Attempt to initialize repo
         try:
             repo = git.Repo(repo_dir)
