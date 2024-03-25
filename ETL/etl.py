@@ -103,7 +103,7 @@ class McBrokenData:
         #convert string output to list
         commit_list = commit_list.split('\n')
         commit_times_json_path = self.dump_dir / '000_COMMIT_TIMES.json'
-        for each in commit_list:
+        for each in commit_list[0:10]:
             current_file_path = self.dump_dir / f'{each}.json'
             try:
                 assert current_file_path.exists()
@@ -142,16 +142,20 @@ class McBrokenData:
                     current_mcbroken_json = self.dump_dir / (str(each_commit)+'.json')
                     with open(current_mcbroken_json, 'r+') as f:
                         current_mcbroken_contents = json.load(f)
-                        for each_entry in current_mcbroken_contents[0:10]:
-                            value_to_subtract_in_seconds = int(each_entry['properties']['last_checked'].strip(' Checkedminutesago')) * int(60)
-                            each_entry['properties']['last_checked'] = int(commit_times_dict[each_commit]['commit_time']) - value_to_subtract_in_seconds
+                        for each_entry in current_mcbroken_contents:
+                            if isinstance(each_entry['properties']['last_checked'], int):
+                                continue
+                            else:
+                                value_to_subtract_in_seconds = int(each_entry['properties']['last_checked'].strip(' Checkedminutesago')) * int(60)
+                                each_entry['properties']['last_checked'] = int(commit_times_dict[each_commit]['commit_time']) - value_to_subtract_in_seconds
+                                commit_times_dict[each_commit]['time_fixed'] = True
                         f.seek(0)
                         new_mcbroken_contents = json.dumps(current_mcbroken_contents, sort_keys=True, indent=4)
                         f.write(new_mcbroken_contents)
                     commit_times_dict[each_commit]['time_fixed'] = True
                     continue
             commit_times.seek(0)
-            commit_times_as_json = json.dumps(commit_times_dict)
+            commit_times_as_json = json.dumps(commit_times_dict, sort_keys=True, indent=4)
             commit_times.write(commit_times_as_json)
 
 
