@@ -103,7 +103,7 @@ class McBrokenData:
         #convert string output to list
         commit_list = commit_list.split('\n')
         commit_times_json_path = self.dump_dir / '000_COMMIT_TIMES.json'
-        for each in commit_list:
+        for each in commit_list[0:10]:
             current_file_path = self.dump_dir / f'{each}.json'
             try:
                 assert current_file_path.exists()
