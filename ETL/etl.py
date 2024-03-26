@@ -138,7 +138,7 @@ class McBrokenData:
                     # Checks if last_checked has already been converted to epoch time.
                     if not isinstance(mcbroken_json_contents[len(mcbroken_json_contents) - 1]['properties']['last_checked'], int):
                         print(f"Fixing times in {each}.json...")
-                        mcbroken_json_contents = self.fix_times(mcbroken_json_contents, commit_times[each]['commit_time'])
+                        mcbroken_json_contents = self.fix_times(mcbroken_json_contents, commit_times[each]['commit_time'], each)
                     mcbroken_json_contents = json.dumps(mcbroken_json_contents)
                     f.seek(0)
                     f.write(mcbroken_json_contents)
