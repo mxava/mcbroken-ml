@@ -80,6 +80,7 @@ class McBrokenData:
             # Assumes that any valid repo at this location is the correct one
             assert repo.git_dir
         except:
+            print(f'Repo not found at {repo_dir} - cloning from {source_url}...\n This may take a while!')
             try:
                 repo = git.Repo.clone_from(source_url,
                            str(repo_dir),
@@ -92,71 +93,88 @@ class McBrokenData:
         is_initialized = True
         return repo, is_initialized
     
-    def extract(self):
-        commit_list = self.repo.git.log('--pretty=%h', '--all', '--', './mcbroken.json')
+    def et_phone_home(self):
         # Generate dump data
         repo = self.repo
         repo.remotes.origin.fetch()
         if not self.dump_dir.exists():
             self.dump_dir.mkdir(parents=True, exist_ok=True)
         commit_list = repo.git.log('--pretty=%h', '--all', '--', './mcbroken.json')
-        #convert string output to list
+        # Convert string output to list
         commit_list = commit_list.split('\n')
         commit_times_json_path = self.dump_dir / '000_COMMIT_TIMES.json'
+        commit_times = {}
+        try:
+            with open(commit_times_json_path, "r+") as f:
+                commit_times = json.load(f)
+        except:
+            print(f'\'000_COMMIT_TIMES.json\' not found in {self.dump_dir}. Generating new - this may take a while!')
+            pass
         for each in commit_list:
             current_file_path = self.dump_dir / f'{each}.json'
+            # Ensure we do not duplicate work
+            if each not in commit_times:
+                commit_times[each] = {}
+                commit_times[each]['commit_time'] = repo.git.show('--no-patch', '--pretty=format:%ct', each)
+                commit_times[each]['time_fixed'] = False
+                commit_times[each]['processed'] = False
+            if commit_times[each]['time_fixed'] and commit_times[each]['processed'] == True:
+                continue
+            # Try to read from already-existing data in case time has already been fixed
+            if current_file_path.exists():
+                with open(current_file_path, 'r+') as f:
+                    # TODO: only check mcbroken contents once
+                    try:
+                        mcbroken_json_contents = json.load(f)
+                    except:
+                        print(f'Something went wrong with \'{each}.json\' - skipping!')
+                        continue
+                    # Checks if last_checked has already been converted to epoch time.
+                    if not isinstance(mcbroken_json_contents[len(mcbroken_json_contents) - 1]['properties']['last_checked'], int):
+                        print(f"Fixing times in {each}.json...")
+                        mcbroken_json_contents = self.fix_times(mcbroken_json_contents, commit_times[each]['commit_time'])
+                    mcbroken_json_contents = json.dumps(mcbroken_json_contents)
+                    f.seek(0)
+                    f.write(mcbroken_json_contents)
+                    commit_times[each]['time_fixed'] = True
+                    continue
+            else:
+                print(f"Generating {each}.json...")
+                with open(current_file_path, 'w+') as f:
+                    current_contents = json.loads(str(repo.git.show(f'{each}:mcbroken.json')))
+                    try:
+                        current_contents = self.fix_times(current_contents, commit_times[each]['commit_time'], each)
+                        current_contents = json.dumps(current_contents)
+                        f.seek(0)
+                        f.write(current_contents)
+                        commit_times[each]['time_fixed'] = True
+                    except:
+                        print(f'Something went wrong with \'{each}.json\' - skipping!')
+                        commit_times[each]['time_fixed'] = True
+                        commit_times[each]['processed'] = True
+            with open(commit_times_json_path, 'w+') as f:
+                commit_times = json.dumps(commit_times, sort_keys=True, indent=4)
+                f.seek(0)
+                f.write(commit_times)
+                commit_times = json.loads(commit_times)
+
+
+    def fix_times(self, input_mcbroken_json: dict, commit_timestamp: int, commit_hash: str) -> dict:
+        output_mcbroken_json = []
+        print(f"Fixing {commit_hash}.json...")
+        output_mcbroken_json = input_mcbroken_json
+        for each_entry in output_mcbroken_json:
             try:
-                assert current_file_path.exists()
+                assert isinstance(each_entry['properties']['last_checked'], int)
                 continue
             except:
-                print(f'Fetching data for \'{each}\'...')
-                current_contents = repo.git.show(f'{each}:mcbroken.json')
-                with open(current_file_path, 'w+') as f:
-                    f.write(current_contents)
-                if commit_times_json_path.is_file() != True:
-                    with open(commit_times_json_path, 'w+') as f:
-                        commit_times = dict()
-                        commit_times[each] = {}
-                        commit_times[each]['commit_time'] = repo.git.show('--no-patch', '--pretty=format:%ct', each)
-                        commit_times[each]['time_fixed'] = False
-                        commit_times_as_json = json.dumps(commit_times, sort_keys=True, indent=4)
-                        f.write(commit_times_as_json)
-                else:
-                    with open(commit_times_json_path, 'r+') as f:
-                        commit_times = json.load(f)
-                        commit_times[each] = {}
-                        commit_times[each]['commit_time'] = repo.git.show('--no-patch', '--pretty=format:%ct', each)
-                        commit_times[each]['time_fixed'] = False
-                        commit_times[each]['processed'] = False
-                        f.seek(0)
-                        commit_times_as_json = json.dumps(commit_times, sort_keys=True, indent=4)
-                        f.write(commit_times_as_json)
+                value_to_subtract = each_entry['properties']['last_checked'].strip(' Checkedminutesago')
+                # Convert to seconds
+                value_to_subtract = int(value_to_subtract) * 60
+                each_entry['properties']['last_checked'] = int(commit_timestamp) - value_to_subtract
+        #output_mcbroken_json = json.dumps(output_mcbroken_json, sort_keys=True, indent=4)
+        return output_mcbroken_json
 
-    def fix_times(self):
-        commit_times_json_path = self.dump_dir / '000_COMMIT_TIMES.json'
-        with open(commit_times_json_path, 'r+') as commit_times:
-            commit_times_dict = json.load(commit_times)
-            for each_commit in list(commit_times_dict.keys()):
-                if commit_times_dict[each_commit]['time_fixed'] is not True:
-                    print(f'Adjusting \'last_checked\' values for {each_commit}.json...')
-                    current_mcbroken_json = self.dump_dir / (str(each_commit)+'.json')
-                    with open(current_mcbroken_json, 'r+') as f:
-                        current_mcbroken_contents = json.load(f)
-                        for each_entry in current_mcbroken_contents:
-                            if isinstance(each_entry['properties']['last_checked'], int):
-                                continue
-                            else:
-                                value_to_subtract_in_seconds = int(each_entry['properties']['last_checked'].strip(' Checkedminutesago')) * int(60)
-                                each_entry['properties']['last_checked'] = int(commit_times_dict[each_commit]['commit_time']) - value_to_subtract_in_seconds
-                                commit_times_dict[each_commit]['time_fixed'] = True
-                        f.seek(0)
-                        new_mcbroken_contents = json.dumps(current_mcbroken_contents, sort_keys=True, indent=4)
-                        f.write(new_mcbroken_contents)
-                    commit_times_dict[each_commit]['time_fixed'] = True
-                    continue
-            commit_times.seek(0)
-            commit_times_as_json = json.dumps(commit_times_dict, sort_keys=True, indent=4)
-            commit_times.write(commit_times_as_json)
 
 
 
@@ -190,5 +208,5 @@ class WeatherData:
 ### Scratchpad
 if __name__ == '__main__':
     mcbroken_data = McBrokenData(name='mcbroken')
-    mcbroken_data.extract()
+    mcbroken_data.et_phone_home()
     mcbroken_data.fix_times()
