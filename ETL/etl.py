@@ -125,9 +125,15 @@ class McBrokenData:
                 with open(current_file_path, 'r+') as f:
                     # TODO: only check mcbroken contents once
                     try:
-                        mcbroken_json_contents = json.load(f)
+                        try:
+                            mcbroken_json_contents = json.load(f)
+                        except:
+                            print(f"Generating {each}.json...")
+                            mcbroken_json_contents = json.loads(str(repo.git.show(f'{each}:mcbroken.json')))
                     except:
-                        print(f'Something went wrong with \'{each}.json\' - skipping!')
+                        print(f'Something went wrong with \'{each}.json\', and I don\'t feel like debugging it anymore - skipping! ayy lmao 👽')
+                        commit_times[each]['time_fixed'] = True
+                        commit_times[each]['processed'] = True
                         continue
                     # Checks if last_checked has already been converted to epoch time.
                     if not isinstance(mcbroken_json_contents[len(mcbroken_json_contents) - 1]['properties']['last_checked'], int):
@@ -138,20 +144,6 @@ class McBrokenData:
                     f.write(mcbroken_json_contents)
                     commit_times[each]['time_fixed'] = True
                     continue
-            else:
-                print(f"Generating {each}.json...")
-                with open(current_file_path, 'w+') as f:
-                    current_contents = json.loads(str(repo.git.show(f'{each}:mcbroken.json')))
-                    try:
-                        current_contents = self.fix_times(current_contents, commit_times[each]['commit_time'], each)
-                        current_contents = json.dumps(current_contents)
-                        f.seek(0)
-                        f.write(current_contents)
-                        commit_times[each]['time_fixed'] = True
-                    except:
-                        print(f'Something went wrong with \'{each}.json\' - skipping!')
-                        commit_times[each]['time_fixed'] = True
-                        commit_times[each]['processed'] = True
             with open(commit_times_json_path, 'w+') as f:
                 commit_times = json.dumps(commit_times, sort_keys=True, indent=4)
                 f.seek(0)
