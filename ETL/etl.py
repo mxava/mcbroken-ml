@@ -94,6 +94,9 @@ class McBrokenData:
         return repo, is_initialized
     
     def et_phone_home(self):
+        ### If I wanted to write this in a way that wasn't terrible,
+        ### I would decouple extract and load tasks so that I could distribute the
+        ### workload and remove bottlenecks, but this works well enough as a proof of concept. 👽
         # Generate dump data
         repo = self.repo
         repo.remotes.origin.fetch()
@@ -109,51 +112,67 @@ class McBrokenData:
                 commit_times = json.load(f)
         except:
             print(f'\'000_COMMIT_TIMES.json\' not found in {self.dump_dir}. Generating new - this may take a while!')
-            pass
         for each in commit_list:
+            print(f'Processing commit \'{each}\'...')
             current_file_path = self.dump_dir / f'{each}.json'
             # Ensure we do not duplicate work
-            if each not in commit_times:
+            if each not in list(commit_times.keys()):
                 commit_times[each] = {}
                 commit_times[each]['commit_time'] = repo.git.show('--no-patch', '--pretty=format:%ct', each)
                 commit_times[each]['time_fixed'] = False
                 commit_times[each]['processed'] = False
-            if commit_times[each]['time_fixed'] and commit_times[each]['processed'] == True:
+            if commit_times[each]['processed']:
+                continue
+            if commit_times[each]['time_fixed'] == True and current_file_path.exists():
                 continue
             # Try to read from already-existing data in case time has already been fixed
+            current_mcbroken_file_contents = {}
             if current_file_path.exists():
                 with open(current_file_path, 'r+') as f:
                     # TODO: only check mcbroken contents once
                     try:
-                        try:
-                            mcbroken_json_contents = json.load(f)
-                        except:
-                            print(f"Generating {each}.json...")
-                            mcbroken_json_contents = json.loads(str(repo.git.show(f'{each}:mcbroken.json')))
+                        current_mcbroken_file_contents = json.load(f)
+                        assert len(current_mcbroken_file_contents) >= 1
                     except:
-                        print(f'Something went wrong with \'{each}.json\', and I don\'t feel like debugging it anymore - skipping! ayy lmao 👽')
-                        commit_times[each]['time_fixed'] = True
-                        commit_times[each]['processed'] = True
-                        continue
-                    # Checks if last_checked has already been converted to epoch time.
-                    if not isinstance(mcbroken_json_contents[len(mcbroken_json_contents) - 1]['properties']['last_checked'], int):
-                        print(f"Fixing times in {each}.json...")
-                        mcbroken_json_contents = self.fix_times(mcbroken_json_contents, commit_times[each]['commit_time'], each)
-                    mcbroken_json_contents = json.dumps(mcbroken_json_contents)
-                    f.seek(0)
-                    f.write(mcbroken_json_contents)
+                        print(f"Attempting to generate {each}.json...")
+            if not current_file_path.exists():
+                try:
+                    current_mcbroken_file_contents = json.loads(str(repo.git.show(f'{each}:mcbroken.json')))
+                    assert len(current_mcbroken_file_contents) >= 1
+                except:
+                    print(f'Something went wrong with \'{each}.json\', and if it got to this point I don\'t feel like debugging it anymore - ayy lmao 👽')
+                    try:
+                        current_file_path.rmdir()
+                    except:
+                        pass
                     commit_times[each]['time_fixed'] = True
+                    commit_times[each]['processed'] = True
                     continue
-            with open(commit_times_json_path, 'w+') as f:
-                commit_times = json.dumps(commit_times, sort_keys=True, indent=4)
+            # Checks if last_checked has already been converted to epoch time.
+            if not isinstance(current_mcbroken_file_contents[len(current_mcbroken_file_contents) - 1]['properties']['last_checked'], int):
+                current_mcbroken_file_contents = self.fix_times(current_mcbroken_file_contents, commit_times[each]['commit_time'], each)
+                commit_times[each]['time_fixed'] = True
+            current_mcbroken_file_contents = json.dumps(current_mcbroken_file_contents, sort_keys=True, indent=4)
+            with open(current_file_path, 'w+') as f:
                 f.seek(0)
-                f.write(commit_times)
-                commit_times = json.loads(commit_times)
+                f.write(current_mcbroken_file_contents)
+            commit_times[each]['time_fixed'] = True
+            try:
+                with open(commit_times_json_path, 'r+') as f:
+                    commit_times = json.dumps(commit_times, sort_keys=True, indent=4)
+                    f.seek(0)
+                    f.write(commit_times)
+                    commit_times = json.loads(commit_times)
+            except:
+                with open(commit_times_json_path, 'w+') as f:
+                    commit_times = json.dumps(commit_times, sort_keys=True, indent=4)
+                    f.write(commit_times)
+                    commit_times = json.loads(commit_times)
 
 
     def fix_times(self, input_mcbroken_json: dict, commit_timestamp: int, commit_hash: str) -> dict:
         output_mcbroken_json = []
-        print(f"Fixing {commit_hash}.json...")
+        print(f"Fixing times for \'{commit_hash}.json\'...")
         output_mcbroken_json = input_mcbroken_json
         for each_entry in output_mcbroken_json:
             try:
@@ -201,4 +220,3 @@ class WeatherData:
 if __name__ == '__main__':
     mcbroken_data = McBrokenData(name='mcbroken')
     mcbroken_data.et_phone_home()
-    mcbroken_data.fix_times()
